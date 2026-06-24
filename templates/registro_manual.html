@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Registro Manual{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Registro Manual</div>
+    <div class="page-sub">Use quando não houver nota fiscal disponível</div>
+</div>
+
+<div class="card" style="max-width:700px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Toggle de tipo -->
+        <div class="form-group">
+            <label class="form-label">Tipo de registro</label>
+            <div style="display:flex; gap:8px;">
+                <label style="flex:1; cursor:pointer;">
+                    <input type="radio" name="tipo" value="abastecimento" checked
+                           onchange="alternarTipo('abastecimento')" style="display:none;">
+                    <div id="btn-abastecimento" class="btn btn-primary" style="width:100%; justify-content:center;">
+                        ⛽ Abastecimento
+                    </div>
+                </label>
+                <label style="flex:1; cursor:pointer;">
+                    <input type="radio" name="tipo" value="manutencao"
+                           onchange="alternarTipo('manutencao')" style="display:none;">
+                    <div id="btn-manutencao" class="btn btn-secondary" style="width:100%; justify-content:center;">
+                        🔧 Manutenção
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+
+            <div class="form-group">
+                <label class="form-label">Placa</label>
+                <input type="text" name="placa" class="form-input" required
+                       maxlength="10" list="lista-placas" placeholder="Ex: PPW3444">
+                <datalist id="lista-placas">
+                    {% for v in veiculos %}
+                    <option value="{{ v.placa }}">{{ v.modelo }}</option>
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Data</label>
+                <input type="date" name="data" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" id="label-motorista">Motorista</label>
+                <input type="text" name="motorista" class="form-input" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" id="label-posto">Posto</label>
+                <input type="text" name="posto_nome" class="form-input" required
+                       maxlength="100" list="lista-postos">
+                <datalist id="lista-postos">
+                    {% for p in postos %}
+                    <option value="{{ p.nome }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" id="label-produto">Produto</label>
+                <input type="text" name="produto" class="form-input" maxlength="100">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Valor Total (R$)</label>
+                <input type="number" step="0.01" name="valor_total" class="form-input" required>
+            </div>
+
+            <div id="campos-abastecimento" style="display:contents;">
+                <div class="form-group">
+                    <label class="form-label">Litros</label>
+                    <input type="number" step="0.001" name="litros" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor Unitário (R$/L)</label>
+                    <input type="number" step="0.0001" name="valor_unitario" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">KM</label>
+                    <input type="number" name="km" class="form-input">
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:8px;">
+            <a href="/" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">✅ Salvar Registro</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function alternarTipo(tipo) {
+    const btnAbast = document.getElementById('btn-abastecimento');
+    const btnManut = document.getElementById('btn-manutencao');
+    const camposAbast = document.getElementById('campos-abastecimento');
+    const labelMotorista = document.getElementById('label-motorista');
+    const labelPosto = document.getElementById('label-posto');
+    const labelProduto = document.getElementById('label-produto');
+
+    if (tipo === 'abastecimento') {
+        btnAbast.className = 'btn btn-primary';
+        btnManut.className = 'btn btn-secondary';
+        camposAbast.style.display = 'contents';
+        labelMotorista.textContent = 'Motorista';
+        labelPosto.textContent = 'Posto';
+        labelProduto.textContent = 'Produto';
+    } else {
+        btnAbast.className = 'btn btn-secondary';
+        btnManut.className = 'btn btn-primary';
+        camposAbast.style.display = 'none';
+        labelMotorista.textContent = 'Responsável';
+        labelPosto.textContent = 'Fornecedor';
+        labelProduto.textContent = 'Descrição do serviço';
+    }
+}
+</script>
+{% endblock %}

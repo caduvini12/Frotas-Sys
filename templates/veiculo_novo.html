@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Novo Veículo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Novo Veículo</div>
+    <div class="page-sub">Cadastra um veículo na frota sem precisar registrar abastecimento</div>
+</div>
+
+<div class="card" style="max-width:500px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label class="form-label">Placa</label>
+            <input type="text" name="placa" class="form-input" required
+                   maxlength="10" placeholder="Ex: PPW3444">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Modelo</label>
+            <input type="text" name="modelo" class="form-input" required
+                   maxlength="100" placeholder="Ex: HILUX">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Tipo de Combustível</label>
+            <select name="tipo_combustivel" class="form-select">
+                <option value="DIESEL S10">Diesel S10</option>
+                <option value="DIESEL S500">Diesel S500</option>
+                <option value="GASOLINA">Gasolina</option>
+                <option value="ETANOL">Etanol</option>
+                <option value="FLEX">Flex</option>
+                <option value="Desconhecido">Desconhecido</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Motorista Padrão</label>
+            <input type="text" name="motorista_padrao" class="form-input"
+                   maxlength="100" placeholder="Ex: NILTON">
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:8px;">
+            <a href="/veiculos" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">✅ Cadastrar Veículo</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

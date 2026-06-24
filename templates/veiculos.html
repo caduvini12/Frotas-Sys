@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Veículos{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+        <div class="page-title">Veículos</div>
+        <div class="page-sub">{{ veiculos|length }} veículo(s) cadastrado(s)</div>
+    </div>
+    <a href="/veiculo/novo" class="btn btn-primary">+ Novo Veículo</a>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Modelo</th>
+                    <th>Combustível</th>
+                    <th>Motorista Padrão</th>
+                    <th>Abastecimentos</th>
+                    <th>Total Gasto</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in veiculos %}
+                <tr>
+                    <td>
+                        <a href="/veiculo/{{ v.placa }}" class="badge badge-blue" style="text-decoration:none;">
+                            {{ v.placa }}
+                        </a>
+                    </td>
+                    <td>{{ v.modelo }}</td>
+                    <td>
+                        <span class="badge badge-gray">{{ v.tipo_combustivel }}</span>
+                    </td>
+                    <td>{{ v.motorista_padrao }}</td>
+                    <td style="font-family:var(--mono);">{{ v.total_abastecimentos }}</td>
+                    <td style="font-family:var(--mono); color:var(--accent);">
+                        R$ {{ "%.2f"|format(v.total_gasto) }}
+                    </td>
+                    <td>
+                        <form method="POST" action="/veiculo/{{ v.placa }}/excluir"
+                              onsubmit="return confirm('Excluir o veículo {{ v.placa }}? Essa ação não pode ser desfeita.');"
+                              style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger" style="padding:5px 10px; font-size:11px;">
+                                🗑
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center; color:var(--text2); padding:24px;">
+                        Nenhum veículo cadastrado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

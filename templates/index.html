@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+    <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">{{ data_inicio }} até {{ data_fim }}</div>
+    </div>
+
+    <form method="GET" action="/" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+        <div>
+            <label class="form-label">De</label>
+            <input type="date" name="data_inicio" value="{{ data_inicio }}" class="form-input" style="width:150px;">
+        </div>
+        <div>
+            <label class="form-label">Até</label>
+            <input type="date" name="data_fim" value="{{ data_fim }}" class="form-input" style="width:150px;">
+        </div>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Custo Total</div>
+        <div class="kpi-value">R$ {{ total_mes }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent: #0057ff;">
+        <div class="kpi-label">Litros Abastecidos</div>
+        <div class="kpi-value">{{ total_litros }} L</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent: #ffb020;">
+        <div class="kpi-label">Abastecimentos</div>
+        <div class="kpi-value">{{ total_abastecimentos }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent: #ff4455;">
+        <div class="kpi-label">Manutenções</div>
+        <div class="kpi-value">{{ total_manutencoes }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+</div>
+
+<!-- Últimos registros -->
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <span style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2);">ÚLTIMOS ABASTECIMENTOS</span>
+        <a href="/veiculos" class="btn btn-secondary">Ver todos</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Placa</th>
+                    <th>Motorista</th>
+                    <th>Posto</th>
+                    <th>Produto</th>
+                    <th>Litros</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in ultimos_abastecimentos %}
+                <tr>
+                    <td style="font-family:var(--mono); font-size:12px;">{{ a.data }}</td>
+                    <td><a href="/veiculo/{{ a.placa }}" class="badge badge-blue" style="text-decoration:none;">{{ a.placa }}</a></td>
+                    <td>{{ a.motorista }}</td>
+                    <td>{{ a.posto }}</td>
+                    <td>
+                        {% if 'DIESEL' in a.produto %}
+                            <span class="badge badge-gray">{{ a.produto }}</span>
+                        {% elif 'GASOLINA' in a.produto %}
+                            <span class="badge badge-green">{{ a.produto }}</span>
+                        {% else %}
+                            <span class="badge badge-red">{{ a.produto }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-family:var(--mono);">{{ a.litros }}</td>
+                    <td style="font-family:var(--mono); color:var(--accent);">R$ {{ a.valor_total }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center; color:var(--text2); padding:24px;">
+                        Nenhum registro encontrado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ veiculo.placa }} — {{ veiculo.modelo }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+    <div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="/" style="color:var(--text2); text-decoration:none; font-size:13px;">← Voltar</a>
+            <div class="page-title">{{ veiculo.placa }}</div>
+            <span class="badge badge-blue">{{ veiculo.modelo }}</span>
+        </div>
+        <div class="page-sub">{{ veiculo.tipo_combustivel }} — Motorista padrão: {{ veiculo.motorista_padrao }}</div>
+    </div>
+
+    <!-- Filtro de intervalo -->
+    <form method="GET" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div>
+            <label class="form-label" style="margin-bottom:4px;">De</label>
+            <input type="date" name="data_inicio" value="{{ data_inicio }}" class="form-input" style="width:150px;">
+        </div>
+        <div>
+            <label class="form-label" style="margin-bottom:4px;">Até</label>
+            <input type="date" name="data_fim" value="{{ data_fim }}" class="form-input" style="width:150px;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:18px;">Filtrar</button>
+    </form>
+</div>
+
+<!-- KPIs do veículo -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+    <div class="kpi-card">
+        <div class="kpi-label">Custo Combustível</div>
+        <div class="kpi-value">R$ {{ "%.2f"|format(total_abastecido) }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent:#ff4455;">
+        <div class="kpi-label">Custo Manutenção</div>
+        <div class="kpi-value">R$ {{ "%.2f"|format(total_manutencao) }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent:#0057ff;">
+        <div class="kpi-label">Abastecimentos</div>
+        <div class="kpi-value">{{ abastecimentos|length }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent:#ffb020;">
+        <div class="kpi-label">Manutenções</div>
+        <div class="kpi-value">{{ manutencoes|length }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+    <div class="kpi-card" style="--accent:#00c896;">
+        <div class="kpi-label">Custo Total</div>
+        <div class="kpi-value">R$ {{ "%.2f"|format(total_abastecido + total_manutencao) }}</div>
+        <div class="kpi-delta">No período</div>
+    </div>
+</div>
+
+<!-- Gráfico -->
+{% if grafico_labels %}
+<div class="card" style="margin-bottom:24px;">
+    <div style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2); margin-bottom:16px;">CUSTO MENSAL DE COMBUSTÍVEL</div>
+    <canvas id="grafico" height="80"></canvas>
+</div>
+{% endif %}
+
+<!-- Abastecimentos -->
+<div class="card" style="margin-bottom:24px;">
+    <div style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2); margin-bottom:16px;">
+        HISTÓRICO DE ABASTECIMENTOS ({{ abastecimentos|length }})
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Motorista</th>
+                    <th>Posto</th>
+                    <th>Produto</th>
+                    <th>Litros</th>
+                    <th>R$/L</th>
+                    <th>Total</th>
+                    <th>KM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in abastecimentos %}
+                <tr>
+                    <td style="font-family:var(--mono); font-size:12px;">{{ a.data }}</td>
+                    <td>{{ a.motorista }}</td>
+                    <td>{{ a.posto }}</td>
+                    <td>
+                        {% if 'DIESEL' in a.produto %}
+                            <span class="badge badge-gray">{{ a.produto }}</span>
+                        {% else %}
+                            <span class="badge badge-green">{{ a.produto }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-family:var(--mono);">{{ a.litros }}</td>
+                    <td style="font-family:var(--mono);">R$ {{ "%.2f"|format(a.valor_unitario) }}</td>
+                    <td style="font-family:var(--mono); color:var(--accent);">R$ {{ "%.2f"|format(a.valor_total) }}</td>
+                    <td style="font-family:var(--mono); color:var(--text2);">
+                        {% if a.km %}{{ a.km|int }} km{% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align:center; color:var(--text2); padding:24px;">
+                        Nenhum abastecimento no período.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Manutenções -->
+<div class="card">
+    <div style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2); margin-bottom:16px;">
+        HISTÓRICO DE MANUTENÇÕES ({{ manutencoes|length }})
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Fornecedor</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in manutencoes %}
+                <tr>
+                    <td style="font-family:var(--mono); font-size:12px;">{{ m.data }}</td>
+                    <td>{{ m.descricao or '—' }}</td>
+                    <td>{{ m.fornecedor }}</td>
+                    <td style="font-family:var(--mono); color:var(--danger);">R$ {{ "%.2f"|format(m.valor) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center; color:var(--text2); padding:24px;">
+                        Nenhuma manutenção no período.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if grafico_labels %}
+<script>
+const ctx = document.getElementById('grafico').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ grafico_labels | tojson }},
+        datasets: [{
+            label: 'Custo R$',
+            data: {{ grafico_valores | tojson }},
+            backgroundColor: 'rgba(245, 166, 35, 0.3)',
+            borderColor: '#F5A623',
+            borderWidth: 2,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => 'R$ ' + ctx.parsed.y.toFixed(2)
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: '#7a7570', font: { family: 'Space Mono', size: 11 } },
+                grid: { color: '#2a2a2a' }
+            },
+            y: {
+                ticks: {
+                    color: '#7a7570',
+                    font: { family: 'Space Mono', size: 11 },
+                    callback: val => 'R$ ' + val.toFixed(0)
+                },
+                grid: { color: '#2a2a2a' }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

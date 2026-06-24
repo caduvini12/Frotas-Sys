@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Upload de NF-e{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Upload de NF-e</div>
+    <div class="page-sub">Envie os arquivos XML das notas fiscais para importação automática</div>
+</div>
+
+{% if not resultados %}
+<div class="card" style="max-width:600px;">
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="upload-zone" onclick="document.getElementById('arquivos').click()">
+            <div class="upload-zone-icon">📄</div>
+            <div class="upload-zone-text">
+                <strong>Clique para selecionar</strong> ou arraste os arquivos XML aqui
+            </div>
+            <div style="font-size:11px; color:var(--text2); margin-top:8px;">
+                Múltiplos arquivos permitidos — apenas .xml
+            </div>
+        </div>
+
+        <input type="file" id="arquivos" name="arquivos" multiple accept=".xml,.pdf">
+            
+
+        <div id="lista-arquivos" style="margin-top:12px; font-size:13px; color:var(--text2);"></div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:16px; width:100%;">
+            Processar Arquivos
+        </button>
+    </form>
+</div>
+
+{% else %}
+{# Achata todos os itens de todos os arquivos numa lista única com índice global #}
+{% set ns = namespace(contador=0) %}
+
+<form method="POST" action="/upload/confirmar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {% for r in resultados %}
+
+        {% if r.erro %}
+        <div class="card" style="margin-bottom:16px; border-left:3px solid var(--danger);">
+            <div style="font-family:var(--mono); font-size:11px; color:var(--danger); margin-bottom:8px;">
+                ❌ {{ r.arquivo }}
+            </div>
+            <div style="font-size:13px; color:var(--text2);">{{ r.erro }}</div>
+        </div>
+
+        {% else %}
+
+        {% if r.itens|length > 1 %}
+        <div style="font-family:var(--mono); font-size:11px; color:var(--text2); margin:12px 0 4px;">
+            📄 {{ r.arquivo }} — {{ r.itens|length }} itens encontrados
+        </div>
+        {% endif %}
+
+        {% for j, item in r.itens|enumerate_items %}
+        {% set i = ns.contador %}
+
+        <div class="card" style="margin-bottom:12px; border-left:3px solid {% if item.tipo == 'abastecimento' %}var(--accent){% else %}#ff4455{% endif %};">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div style="font-family:var(--mono); font-size:11px; color:{% if item.tipo == 'abastecimento' %}var(--accent){% else %}#ff4455{% endif %};">
+                    {% if item.tipo == 'abastecimento' %}⛽{% else %}🔧{% endif %}
+                    {{ r.arquivo }}{% if r.itens|length > 1 %} — item {{ j+1 }}{% endif %}
+                </div>
+                <select name="tipo_{{ i }}" class="form-select" style="width:160px;">
+                    <option value="abastecimento" {% if item.tipo == 'abastecimento' %}selected{% endif %}>Abastecimento</option>
+                    <option value="manutencao" {% if item.tipo == 'manutencao' %}selected{% endif %}>Manutenção</option>
+                    <option value="ignorar">Ignorar</option>
+                </select>
+            </div>
+
+            <input type="hidden" name="numero_nf_{{ i }}" value="{{ item.numero_nf or '' }}">
+            <input type="hidden" name="item_idx_{{ i }}" value="{{ j }}">
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Placa</label>
+                    <input type="text" name="placa_{{ i }}" value="{{ item.placa or '' }}"
+                           class="form-input" maxlength="10" placeholder="Ex: PPW3444">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data</label>
+                    <input type="date" name="data_{{ i }}" value="{{ item.data or '' }}"
+                           class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Motorista</label>
+                    <input type="text" name="motorista_{{ i }}" value="{{ item.motorista or '' }}"
+                           class="form-input" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fornecedor / Posto</label>
+                    <input type="text" name="posto_nome_{{ i }}" value="{{ item.posto_nome or '' }}"
+                           class="form-input" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Produto / Descrição</label>
+                    <input type="text" name="produto_{{ i }}" value="{{ item.produto or '' }}"
+                           class="form-input" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor Total (R$)</label>
+                    <input type="number" step="0.01" name="valor_total_{{ i }}"
+                           value="{{ item.valor_total or '' }}" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Litros</label>
+                    <input type="number" step="0.001" name="litros_{{ i }}"
+                           value="{{ item.litros or '' }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">R$/L</label>
+                    <input type="number" step="0.0001" name="valor_unitario_{{ i }}"
+                           value="{{ item.valor_unitario or '' }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">KM</label>
+                    <input type="number" name="km_{{ i }}"
+                           value="{{ item.km or '' }}" class="form-input">
+                </div>
+            </div>
+        </div>
+
+        {% set ns.contador = ns.contador + 1 %}
+        {% endfor %}
+        {% endif %}
+    {% endfor %}
+
+    <input type="hidden" name="total" value="{{ ns.contador }}">
+
+    <div style="display:flex; gap:12px; margin-top:8px; margin-bottom:32px;">
+        <a href="/upload" class="btn btn-secondary">← Voltar</a>
+        <button type="submit" class="btn btn-primary">✅ Confirmar e Salvar Todos</button>
+    </div>
+</form>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mostrarArquivos(input) {
+    const lista = document.getElementById('lista-arquivos');
+    const arquivos = Array.from(input.files);
+    lista.innerHTML = arquivos.map(f =>
+        `<div style="padding:4px 0; border-bottom:1px solid var(--border);">📄 ${f.name}</div>`
+    ).join('');
+}
+</script>
+{% endblock %}

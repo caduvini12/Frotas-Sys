@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>{% block title %}Frota{% endblock %} — Ative Engenharia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #0c0c0c;
+            --bg2:       #141414;
+            --bg3:       #1a1a1a;
+            --border:    #2a2a2a;
+            --accent:    #F5A623;
+            --accent2:   #e8941a;
+            --text:      #f0ede8;
+            --text2:     #7a7570;
+            --danger:    #ff4455;
+            --warn:      #ff6b00;
+            --radius:    6px;
+            --mono:      'Space Mono', monospace;
+            --sans:      'DM Sans', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            grid-template-rows: 56px 1fr;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .topbar-brand span { color: var(--text2); font-weight: 400; }
+
+        .topbar-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+        .topbar-user {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text2);
+            letter-spacing: 0.05em;
+        }
+
+        .btn-logout {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--danger);
+            background: transparent;
+            border: 1px solid var(--danger);
+            border-radius: var(--radius);
+            padding: 5px 12px;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: background 0.15s, color 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-logout:hover { background: var(--danger); color: #fff; }
+
+        .sidebar {
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: sticky;
+            top: 56px;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+
+        .nav-section { padding: 0 16px; margin-bottom: 8px; }
+
+        .nav-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            color: var(--text2);
+            text-transform: uppercase;
+            padding: 8px 8px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: var(--radius);
+            color: var(--text2);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 400;
+            transition: background 0.12s, color 0.12s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-item:hover { background: var(--bg3); color: var(--text); }
+
+        .nav-item.active {
+            background: rgba(245, 166, 35, 0.10);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .nav-item.active .nav-icon { opacity: 1; }
+        .nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+        .nav-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+
+        .main { padding: 32px; overflow-y: auto; }
+        .page-header { margin-bottom: 28px; }
+
+        .page-title {
+            font-family: var(--mono);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .page-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+        .card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .kpi-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            color: var(--text2);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--text); }
+        .kpi-delta { font-size: 11px; color: var(--text2); margin-top: 4px; }
+        .kpi-delta.up { color: var(--accent); }
+        .kpi-delta.down { color: var(--danger); }
+
+        .flash {
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 20px;
+            border-left: 3px solid;
+        }
+
+        .flash.success { background: rgba(245,166,35,0.08); border-color: var(--accent); color: var(--accent); }
+        .flash.error   { background: rgba(255,68,85,0.08);  border-color: var(--danger); color: var(--danger); }
+        .flash.warning { background: rgba(255,107,0,0.08);  border-color: var(--warn);   color: var(--warn); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.15s, transform 0.1s;
+            text-decoration: none;
+        }
+
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: var(--accent); color: #d3d2d2; }
+        .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+        thead th {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text2);
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        tbody tr:hover { background: var(--bg3); }
+        tbody tr:last-child { border-bottom: none; }
+        tbody td { padding: 10px 12px; color: var(--text); }
+
+        .badge {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 99px;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-green { background: rgba(245,166,35,0.12); color: var(--accent); }
+        .badge-blue  { background: rgba(0,87,255,0.12);   color: #5b9fff; }
+        .badge-red   { background: rgba(255,68,85,0.12);  color: var(--danger); }
+        .badge-gray  { background: rgba(122,117,112,0.12); color: var(--text2); }
+
+        .form-group { margin-bottom: 16px; }
+
+        .form-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text2);
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 13px;
+            padding: 9px 12px;
+            transition: border-color 0.15s;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text2); }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            transition: border-color 0.15s, background 0.15s;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(226, 219, 207, 0.966);
+        }
+
+        .upload-zone-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+        .upload-zone-text { font-size: 13px; color: var(--text2); }
+        .upload-zone-text strong { color: var(--accent); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+
+    <header class="topbar">
+        <a class="topbar-brand" href="/">
+            <div class="topbar-dot"></div>
+            FROTA<span>/SYS</span>
+        </a>
+        <div class="topbar-right">
+            <span class="topbar-user">VISITANTE</span>
+            <a href="/logout" class="btn-logout">SAIR</a>
+        </div>
+    </header>
+
+    <nav class="sidebar">
+        <div class="nav-section">
+            <div class="nav-label">Visão Geral</div>
+            <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="1" y="1" width="6" height="6" rx="1"/>
+                    <rect x="9" y="1" width="6" height="6" rx="1"/>
+                    <rect x="1" y="9" width="6" height="6" rx="1"/>
+                    <rect x="9" y="9" width="6" height="6" rx="1"/>
+                </svg>
+                Dashboard
+            </a>
+        </div>
+
+
+        <div class="nav-section">
+            <div class="nav-label">Inserir</div>
+            <a href="/upload" class="nav-item {% if '/upload' in request.path %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M8 10V2M5 5l3-3 3 3"/>
+                    <path d="M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/>
+                </svg>
+                Upload de Nota
+            </a>
+            <a href="/registro/manual" class="nav-item {% if '/registro' in request.path %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="8" cy="8" r="7"/>
+                    <path d="M8 5v6M5 8h6"/>
+                </svg>
+                Registro Manual
+            </a>
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <div class="nav-section">
+            <div class="nav-label">Relatórios</div>
+            <a href="/relatorios" class="nav-item {% if '/relatorios' in request.path %}active{% endif %}">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="1" width="12" height="14" rx="1"/>
+                    <path d="M5 5h6M5 8h6M5 11h4"/>
+                </svg>
+                Gerar Relatório
+            </a>
+        </div>
+
+        <div class="nav-divider"></div>
+
+<div class="nav-section">
+    <div class="nav-label">Administração</div>
+    <a href="/veiculo/novo" class="nav-item {% if '/veiculo/novo' in request.path %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="5" width="14" height="8" rx="1"/>
+            <path d="M4 5V4a4 4 0 018 0v1"/>
+            <circle cx="4.5" cy="11" r="1.5"/>
+            <circle cx="11.5" cy="11" r="1.5"/>
+        </svg>
+        Novo Veículo
+    </a>
+</div>
+</nav>
+
+<main class="main">
+
+    
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

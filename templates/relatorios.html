@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Relatório{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+    <div>
+        <div class="page-title">Controle de Frota — Relatório</div>
+        <div class="page-sub">{{ data_inicio }} até {{ data_fim }}</div>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+        <form method="GET" style="display:flex; gap:8px; align-items:flex-end;">
+            <div>
+                <label class="form-label">De</label>
+                <input type="date" name="data_inicio" value="{{ data_inicio }}" class="form-input" style="width:150px;">
+            </div>
+            <div>
+                <label class="form-label">Até</label>
+                <input type="date" name="data_fim" value="{{ data_fim }}" class="form-input" style="width:150px;">
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+        <button onclick="exportarPDF()" class="btn btn-secondary">⬇ Exportar PDF</button>
+    </div>
+</div>
+
+<!-- KPI principal -->
+<div class="card" style="margin-bottom:16px; text-align:center; padding:24px;">
+    <div class="kpi-label">Gasto Total no Período</div>
+    <div style="font-family:var(--mono); font-size:36px; font-weight:700; color:var(--accent);">
+        R$ {{ "%.2f"|format(total_combustivel + total_manutencao) }}
+    </div>
+</div>
+
+<!-- Cards por produto -->
+<div class="kpi-grid" style="margin-bottom:24px;">
+    {% for p in custo_produto %}
+    <div class="kpi-card">
+        <div class="kpi-label">{{ p.produto }}</div>
+        <div class="kpi-value">R$ {{ "%.2f"|format(p.total) }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Grid de gráficos -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+
+    <!-- Custo por mês -->
+    <div class="card">
+        <div style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2); margin-bottom:16px;">
+            CUSTO POR MÊS
+        </div>
+        <canvas id="graficoMes" height="180"></canvas>
+    </div>
+
+    <!-- Custo por posto -->
+    <div class="card">
+        <div style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2); margin-bottom:16px;">
+            CUSTO POR POSTO
+        </div>
+        <canvas id="graficoPostos" height="180"></canvas>
+    </div>
+
+</div>
+
+<!-- Custo por motorista -->
+<div class="card" style="margin-bottom:24px;">
+    <div style="font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--text2); margin-bottom:16px;">
+        CUSTO POR MOTORISTA
+    </div>
+    <canvas id="graficoMotoristas" height="120"></canvas>
+</div>
+
+<!-- Rankings -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+
+    <div class="card">
+        <div style="font-family:var(--mono); font-size:11px; letter-spacing:0.1em; color:var(--text2); margin-bottom:16px;">
+            🏆 TOP 3 — COMBUSTÍVEL
+        </div>
+        {% for v in top_abastecimento %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-family:var(--mono); font-size:18px; font-weight:700; color:{% if loop.index == 1 %}var(--accent){% elif loop.index == 2 %}var(--text2){% else %}#7a5c2e{% endif %};">
+                    {{ loop.index }}
+                </span>
+                <span class="badge badge-blue">{{ v.placa }}</span>
+            </div>
+            <span style="font-family:var(--mono); font-size:13px; color:var(--accent);">R$ {{ "%.2f"|format(v.total) }}</span>
+        </div>
+        {% else %}
+        <div style="color:var(--text2); font-size:13px;">Sem dados no período.</div>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div style="font-family:var(--mono); font-size:11px; letter-spacing:0.1em; color:var(--text2); margin-bottom:16px;">
+            🔧 TOP 3 — MANUTENÇÃO
+        </div>
+        {% for v in top_manutencao %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-family:var(--mono); font-size:18px; font-weight:700; color:{% if loop.index == 1 %}#ff4455{% elif loop.index == 2 %}var(--text2){% else %}#7a5c2e{% endif %};">
+                    {{ loop.index }}
+                </span>
+                <span class="badge badge-blue">{{ v.placa }}</span>
+            </div>
+            <span style="font-family:var(--mono); font-size:13px; color:#ff4455;">R$ {{ "%.2f"|format(v.total) }}</span>
+        </div>
+        {% else %}
+        <div style="color:var(--text2); font-size:13px;">Sem dados no período.</div>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div style="font-family:var(--mono); font-size:11px; letter-spacing:0.1em; color:var(--text2); margin-bottom:16px;">
+            ⛽ TOP 3 — POSTOS
+        </div>
+        {% for p in top_postos %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-family:var(--mono); font-size:18px; font-weight:700; color:{% if loop.index == 1 %}#0057ff{% elif loop.index == 2 %}var(--text2){% else %}#7a5c2e{% endif %};">
+                    {{ loop.index }}
+                </span>
+                <span style="font-size:13px;">{{ p.posto }}</span>
+            </div>
+            <span style="font-family:var(--mono); font-size:13px; color:#5b9fff;">R$ {{ "%.2f"|format(p.total) }}</span>
+        </div>
+        {% else %}
+        <div style="color:var(--text2); font-size:13px;">Sem dados no período.</div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const corTexto = '#7a7570';
+const corGrid = '#2a2a2a';
+const corAccent = '#F5A623';
+const fonteMono = 'Space Mono';
+
+// Gráfico de custo por mês
+new Chart(document.getElementById('graficoMes'), {
+    type: 'bar',
+    data: {
+        labels: {{ grafico_mes_labels | tojson }},
+        datasets: [{
+            data: {{ grafico_mes_valores | tojson }},
+            backgroundColor: 'rgba(245, 166, 35, 0.3)',
+            borderColor: corAccent,
+            borderWidth: 2,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => 'R$ ' + ctx.parsed.y.toFixed(2) } }
+        },
+        scales: {
+            x: { ticks: { color: corTexto, font: { family: fonteMono, size: 11 } }, grid: { color: corGrid } },
+            y: { ticks: { color: corTexto, font: { family: fonteMono, size: 11 }, callback: v => 'R$ ' + v.toFixed(0) }, grid: { color: corGrid } }
+        }
+    }
+});
+
+// Gráfico de custo por posto (horizontal)
+new Chart(document.getElementById('graficoPostos'), {
+    type: 'bar',
+    data: {
+        labels: {{ grafico_postos_labels | tojson }},
+        datasets: [{
+            data: {{ grafico_postos_valores | tojson }},
+            backgroundColor: 'rgba(91, 159, 255, 0.3)',
+            borderColor: '#5b9fff',
+            borderWidth: 2,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => 'R$ ' + ctx.parsed.x.toFixed(2) } }
+        },
+        scales: {
+            x: { ticks: { color: corTexto, font: { family: fonteMono, size: 11 }, callback: v => 'R$ ' + v.toFixed(0) }, grid: { color: corGrid } },
+            y: { ticks: { color: corTexto, font: { family: fonteMono, size: 11 } }, grid: { display: false } }
+        }
+    }
+});
+
+// Gráfico de custo por motorista (horizontal)
+new Chart(document.getElementById('graficoMotoristas'), {
+    type: 'bar',
+    data: {
+        labels: {{ grafico_motoristas_labels | tojson }},
+        datasets: [{
+            data: {{ grafico_motoristas_valores | tojson }},
+            backgroundColor: 'rgba(245, 166, 35, 0.3)',
+            borderColor: corAccent,
+            borderWidth: 2,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => 'R$ ' + ctx.parsed.x.toFixed(2) } }
+        },
+        scales: {
+            x: { ticks: { color: corTexto, font: { family: fonteMono, size: 11 }, callback: v => 'R$ ' + v.toFixed(0) }, grid: { color: corGrid } },
+            y: { ticks: { color: corTexto, font: { family: fonteMono, size: 11 } }, grid: { display: false } }
+        }
+    }
+});
+ function exportarPDF() {
+    // Espera todos os gráficos renderizarem
+    setTimeout(() => {
+        window.print();
+    }, 500);
+}
+</script>
+
+<style>
+@media print {
+    .sidebar, .topbar, form, button { display: none !important; }
+    .main { padding: 0 !important; }
+    .kpi-card, .card { break-inside: avoid; border: 1px solid #ccc !important; }
+    body { background: white !important; color: black !important; }
+    .kpi-value, .page-title { color: black !important; }
+    .kpi-label, .page-sub { color: #555 !important; }
+}
+@media (max-width: 900px) {
+    .main > div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+</style>
+
+{% endblock %}
