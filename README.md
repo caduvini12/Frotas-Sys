@@ -213,26 +213,6 @@ FLASK_DEBUG=False
 
 ---
 
-## 🔐 Segurança
-
-- Autenticação com Flask-Login e proteção CSRF
-- Rate limiting no endpoint de login (5 tentativas / 5 minutos)
-- Validação de magic bytes nos uploads (PDF e XML)
-- Queries parametrizadas — sem SQL injection
-- Variáveis sensíveis via `.env` (nunca commitadas)
-- RLS habilitado nas tabelas do Supabase
-
----
-
-## 📁 Próximos Passos
-
-- [ ] Deploy na AWS
-- [ ] Orquestração com Apache Airflow
-- [ ] Migração de dados para S3
-- [ ] Testes automatizados com pytest
-- [ ] dbt para versionamento das transformações SQL
-
----
 
 ## 👨‍💻 Autor
 
