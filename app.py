@@ -440,29 +440,41 @@ def upload():
             nome = arquivo.filename.lower()
             try:
                 conteudo = arquivo.read()
+
+                # Valida magic bytes
+                is_pdf = conteudo[:4] == b'%PDF'
+                is_xml = conteudo[:100].lstrip().startswith((b'<?xml', b'<nfeProc', b'<NFe'))
+
+                if nome.endswith('.pdf') and not is_pdf:
+                    resultados.append({'arquivo': arquivo.filename, 'itens': [], 'erro': 'Arquivo não é um PDF válido'})
+                    continue
+
+                if nome.endswith('.xml') and not is_xml:
+                    resultados.append({'arquivo': arquivo.filename, 'itens': [], 'erro': 'Arquivo não é um XML válido'})
+                    continue
+
                 if nome.endswith('.xml'):
                     itens = parse_nfe_xml(conteudo)
                 elif nome.endswith('.pdf'):
                     import io
                     itens = ler_pdf(io.BytesIO(conteudo))
                 else:
-                    resultados.append({
-                        'arquivo': arquivo.filename,
-                        'itens': [],
-                        'erro': 'Formato inválido — apenas XML ou PDF'
-                    })
+                    resultados.append({'arquivo': arquivo.filename, 'itens': [], 'erro': 'Formato inválido — apenas XML ou PDF'})
                     continue
+
                 resultados.append({
                     'arquivo': arquivo.filename,
                     'itens': itens,
                     'erro': None
                 })
+
             except Exception as e:
                 resultados.append({
                     'arquivo': arquivo.filename,
                     'itens': [],
                     'erro': str(e)
                 })
+
         return render_template('upload.html', resultados=resultados)
     return render_template('upload.html', resultados=[])
 
@@ -680,4 +692,4 @@ def registro_manual():
     return render_template('registro_manual.html', veiculos=veiculos, postos=postos)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+   app.run(debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
