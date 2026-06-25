@@ -168,7 +168,9 @@ JOIN veiculos v ON v.placa = a.placa;
 
 ## 🖼️ Screenshots
 
-> _Em breve_
+<img width="1106" height="464" alt="image" src="https://github.com/user-attachments/assets/e34dd05b-3c57-49a5-a343-0e61fb747cba" />
+<img width="1138" height="616" alt="image" src="https://github.com/user-attachments/assets/eff13e35-71e3-467d-beb6-683dc90d262d" />
+
 
 ---
 
