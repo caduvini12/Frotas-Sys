@@ -692,4 +692,5 @@ def registro_manual():
     return render_template('registro_manual.html', veiculos=veiculos, postos=postos)
 
 if __name__ == '__main__':
-   app.run(debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
